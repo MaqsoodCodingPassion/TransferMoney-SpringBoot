@@ -48,6 +48,9 @@ This project is a simple RESTful service for managing bank accounts and transfer
 
 ![image](https://github.com/MaqsoodCodingPassion/TransferMoney-SpringBoot/assets/54396268/7008da9e-03ec-4ec4-97b2-fe09fdbdc91c)
 
+
+![image](https://github.com/MaqsoodCodingPassion/TransferMoney-SpringBoot/assets/54396268/729334be-520f-45f6-a585-21a2cf7fb82e)
+
 Thanks
 
 
