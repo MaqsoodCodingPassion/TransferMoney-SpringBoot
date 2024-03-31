@@ -23,7 +23,7 @@ public class TransferServiceImpl implements TransferService {
 
     @Override
     @Transactional
-    public void transfer(String accountFromId, String accountToId, BigDecimal amount) throws InsufficientFundsException {
+    public synchronized void transfer(String accountFromId, String accountToId, BigDecimal amount) throws InsufficientFundsException {
         // Retrieve accounts
         Account accountFrom = accountsRepository.getAccount(accountFromId);
         Account accountTo = accountsRepository.getAccount(accountToId);

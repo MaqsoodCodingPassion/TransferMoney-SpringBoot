@@ -26,7 +26,7 @@ public class TransferSagaServiceImpl implements TransferSagaService {
     }
 
     @Override
-    public void initiateTransferSaga(String accountFromId, String accountToId, BigDecimal amount) throws InsufficientFundsException {
+    public synchronized void initiateTransferSaga(String accountFromId, String accountToId, BigDecimal amount) throws InsufficientFundsException {
         try {
             // Retrieve accounts
             Account accountFrom = accountsRepository.getAccount(accountFromId);
