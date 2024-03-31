@@ -1,4 +1,4 @@
-package com.dws.challenge.controller;
+package com.dws.challenge.web;
 
 import com.dws.challenge.exception.InsufficientFundsException;
 import com.dws.challenge.service.TransferSagaService;
