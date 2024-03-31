@@ -10,17 +10,33 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 
+/**
+ * TransferServiceImpl class responsible for transferring money between accounts.
+ * This class implements the TransferService interface.
+ */
 @Service
 @Slf4j
 public class TransferServiceImpl implements TransferService {
 
     private final AccountsRepository accountsRepository;
 
+    /**
+     * Constructs a new TransferServiceImpl with the specified AccountsRepository.
+     * @param accountsRepository The repository used to retrieve account information.
+     */
     @Autowired
     public TransferServiceImpl(AccountsRepository accountsRepository) {
         this.accountsRepository = accountsRepository;
     }
 
+    /**
+     * Performs a money transfer from one account to another.
+     * @param accountFromId The ID of the account from which the transfer is initiated.
+     * @param accountToId The ID of the account to which the transfer is made.
+     * @param amount The amount of money to transfer.
+     * @throws InsufficientFundsException if the account from which the transfer is initiated
+     *         does not have sufficient funds to cover the transfer amount.
+     */
     @Override
     @Transactional
     public synchronized void transfer(String accountFromId, String accountToId, BigDecimal amount) throws InsufficientFundsException {
@@ -38,6 +54,14 @@ public class TransferServiceImpl implements TransferService {
         log.info("Transfer completed - Amount: {} transferred from Account {} to Account {}", amount, accountFromId, accountToId);
     }
 
+    /**
+     * Validates the accounts and transfer amount before performing the transfer.
+     * @param accountFrom The account from which the transfer is initiated.
+     * @param accountTo The account to which the transfer is made.
+     * @param amount The amount of money to transfer.
+     * @throws InsufficientFundsException if the account from which the transfer is initiated
+     *         does not have sufficient funds to cover the transfer amount.
+     */
     private void validateAccounts(Account accountFrom, Account accountTo, BigDecimal amount) throws InsufficientFundsException {
         if (accountFrom == null || accountTo == null) {
             throw new IllegalArgumentException("Invalid account details provided");
@@ -47,6 +71,3 @@ public class TransferServiceImpl implements TransferService {
         }
     }
 }
-
-
-

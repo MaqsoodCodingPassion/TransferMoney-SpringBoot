@@ -12,17 +12,33 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 
+/**
+ * TransferController class for managing money transfer operations.
+ * This controller provides endpoints for initiating money transfers between accounts.
+ */
 @RestController
 @RequestMapping("/api/transfers")
 public class TransferController {
 
     private final TransferSagaService transferSagaService;
 
+    /**
+     * Constructs a new TransferController with the specified TransferSagaService.
+     * @param transferSagaService The TransferSagaService responsible for handling money transfer operations.
+     */
     @Autowired
     public TransferController(TransferSagaService transferSagaService) {
         this.transferSagaService = transferSagaService;
     }
 
+    /**
+     * Initiates a money transfer from one account to another.
+     * @param accountFromId The ID of the account from which the transfer is initiated.
+     * @param accountToId The ID of the account to which the transfer is made.
+     * @param amount The amount of money to transfer.
+     * @return ResponseEntity with a success message if the transfer is initiated successfully,
+     *         or an error message if the transfer fails due to insufficient funds or other reasons.
+     */
     @PostMapping("/initiate")
     public ResponseEntity<String> initiateTransfer(@RequestParam String accountFromId,
                                                    @RequestParam String accountToId,
