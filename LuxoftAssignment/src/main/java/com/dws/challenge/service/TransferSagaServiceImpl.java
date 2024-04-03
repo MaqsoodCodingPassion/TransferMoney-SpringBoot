@@ -45,13 +45,11 @@ public class TransferSagaServiceImpl implements TransferSagaService {
      */
     @Override
     public synchronized void initiateTransferSaga(String accountFromId, String accountToId, BigDecimal amount) throws InsufficientFundsException {
-        try {
+        synchronized (this) {
             // Retrieve accounts
             Account accountFrom = accountsRepository.getAccount(accountFromId);
             Account accountTo = accountsRepository.getAccount(accountToId);
 
-            // Validate accounts and amount
-            validateAccounts(accountFrom, accountTo, amount);
             // Perform transfer
             transferService.transfer(accountFromId, accountToId, amount);
             // Send notifications
@@ -59,33 +57,6 @@ public class TransferSagaServiceImpl implements TransferSagaService {
             notificationService.notifyAboutTransfer(accountTo, "Transfer from " + accountFromId, amount);
 
             log.info("Transfer saga completed - Amount: {} transferred from Account {} to Account {}", amount, accountFromId, accountToId);
-        } catch (InsufficientFundsException e) {
-            // Handle InsufficientFundsException
-            log.error("Transfer saga failed - Insufficient funds: {}", e.getMessage());
-            // You can throw a custom exception or handle it as required
-            throw e;
-        } catch (Exception e) {
-            // Handle unexpected exceptions
-            log.error("Transfer saga failed unexpectedly: {}", e.getMessage());
-            // You can throw a custom exception or handle it as required
-            throw new TransferSagaException("Transfer failed unexpectedly", e);
-        }
-    }
-
-    /**
-     * Validates the accounts and transfer amount before performing the transfer.
-     * @param accountFrom The account from which the transfer is initiated.
-     * @param accountTo The account to which the transfer is made.
-     * @param amount The amount of money to transfer.
-     * @throws InsufficientFundsException if the account from which the transfer is initiated
-     *         does not have sufficient funds to cover the transfer amount.
-     */
-    private void validateAccounts(Account accountFrom, Account accountTo, BigDecimal amount) throws InsufficientFundsException {
-        if (accountFrom == null || accountTo == null) {
-            throw new IllegalArgumentException("Invalid account details provided");
-        }
-        if (accountFrom.getBalance().compareTo(amount) < 0) {
-            throw new InsufficientFundsException("Insufficient funds in account: " + accountFrom.getAccountId());
-        }
+         }
     }
 }

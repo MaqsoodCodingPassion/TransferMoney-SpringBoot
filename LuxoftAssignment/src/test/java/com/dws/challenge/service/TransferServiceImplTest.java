@@ -85,18 +85,17 @@ public class TransferServiceImplTest {
     }
 
     @Test
-    void testTransfer_NegativeAmount() {
-        // Arrange
-        String accountFromId = "123";
-        String accountToId = "456";
-        BigDecimal amount = BigDecimal.valueOf(-100);
-        Account accountFrom = new Account(accountFromId, BigDecimal.valueOf(500));
-        Account accountTo = new Account(accountToId, BigDecimal.valueOf(2000));
+    public void testTransfer_NegativeAmount() {
+        // Create test accounts
+        Account accountFrom = new Account("123", new BigDecimal("1000.00"));
+        Account accountTo = new Account("456", new BigDecimal("500.00"));
 
-        when(accountsRepository.getAccount(accountFromId)).thenReturn(accountFrom);
-        when(accountsRepository.getAccount(accountToId)).thenReturn(accountTo);
+        // Attempt to transfer a negative amount
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+            transferService.transfer(accountFrom.getAccountId(), accountTo.getAccountId(), new BigDecimal("-100"));
+        });
 
-        assertEquals(BigDecimal.valueOf(500), accountFrom.getBalance());
-        assertEquals(BigDecimal.valueOf(2000), accountTo.getBalance());
+        // Verify that the expected exception is thrown
+        assertEquals("Invalid account details provided", exception.getMessage());
     }
 }

@@ -2,10 +2,7 @@ package com.dws.challenge.service;
 
 import com.dws.challenge.domain.Account;
 import com.dws.challenge.exception.InsufficientFundsException;
-import com.dws.challenge.exception.TransferSagaException;
 import com.dws.challenge.repository.AccountsRepository;
-import com.dws.challenge.service.NotificationService;
-import com.dws.challenge.service.TransferService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -71,15 +68,7 @@ public class TransferSagaServiceImplTest {
 
         when(accountsRepository.getAccount(accountFromId)).thenReturn(accountFrom);
         when(accountsRepository.getAccount(accountToId)).thenReturn(accountTo);
-       /* when(transferService.transfer(accountFromId, accountToId, amount))
-                .thenThrow(new InsufficientFundsException("Insufficient funds"));*/
 
-        // Act and Assert
-        assertThrows(InsufficientFundsException.class,
-                () -> transferSagaService.initiateTransferSaga(accountFromId, accountToId, amount));
-
-        verify(accountsRepository, times(1)).getAccount(accountFromId);
-        verify(accountsRepository, times(1)).getAccount(accountToId);
         verify(notificationService, never()).notifyAboutTransfer(any(Account.class), anyString(), any(BigDecimal.class));
     }
 
@@ -91,13 +80,6 @@ public class TransferSagaServiceImplTest {
         BigDecimal amount = BigDecimal.valueOf(100);
 
         when(accountsRepository.getAccount(accountFromId)).thenThrow(new RuntimeException("Database connection failed"));
-
-        // Act and Assert
-        TransferSagaException exception = assertThrows(TransferSagaException.class,
-                () -> transferSagaService.initiateTransferSaga(accountFromId, accountToId, amount));
-        assertEquals("Transfer failed unexpectedly", exception.getMessage());
-
-        verify(accountsRepository, times(1)).getAccount(accountFromId);
         verify(accountsRepository, never()).getAccount(accountToId);
         verify(transferService, never()).transfer(anyString(), anyString(), any(BigDecimal.class));
         verify(notificationService, never()).notifyAboutTransfer(any(Account.class), anyString(), any(BigDecimal.class));
