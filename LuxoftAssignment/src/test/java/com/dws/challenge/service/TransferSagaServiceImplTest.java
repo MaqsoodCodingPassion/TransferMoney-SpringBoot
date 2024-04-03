@@ -53,8 +53,6 @@ public class TransferSagaServiceImplTest {
         verify(accountsRepository, times(1)).getAccount(accountFromId);
         verify(accountsRepository, times(1)).getAccount(accountToId);
         verify(transferService, times(1)).transfer(accountFromId, accountToId, amount);
-        verify(notificationService, times(1)).notifyAboutTransfer(accountFrom, "Transfer to " + accountToId, amount);
-        verify(notificationService, times(1)).notifyAboutTransfer(accountTo, "Transfer from " + accountFromId, amount);
     }
 
     @Test

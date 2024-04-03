@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * TransferServiceImpl class responsible for transferring money between accounts.
@@ -19,7 +21,7 @@ import java.math.BigDecimal;
 public class TransferServiceImpl implements TransferService {
 
     private final AccountsRepository accountsRepository;
-
+    private final Map<String, Object> accountLocks = new ConcurrentHashMap<>();
     /**
      * Constructs a new TransferServiceImpl with the specified AccountsRepository.
      * @param accountsRepository The repository used to retrieve account information.
@@ -40,22 +42,33 @@ public class TransferServiceImpl implements TransferService {
     @Override
     @Transactional
     public void transfer(String accountFromId, String accountToId, BigDecimal amount) throws InsufficientFundsException {
-        synchronized (this) {
             Account accountFrom = accountsRepository.getAccount(accountFromId);
             Account accountTo = accountsRepository.getAccount(accountToId);
 
             if (accountFrom == null || accountTo == null) {
                 throw new IllegalArgumentException("Invalid account details provided");
             }
-            if (accountFrom.getBalance().compareTo(amount) < 0) {
-                throw new InsufficientFundsException("Insufficient funds in account: " + accountFrom.getAccountId());
+
+            // Ensure consistent lock acquisition order to prevent deadlocks
+            String lockKey1 = accountFromId.compareTo(accountToId) < 0 ? accountFromId : accountToId;
+            String lockKey2 = accountFromId.compareTo(accountToId) < 0 ? accountToId : accountFromId;
+
+            Object lock1 = accountLocks.computeIfAbsent(lockKey1, k -> new Object());
+            Object lock2 = accountLocks.computeIfAbsent(lockKey2, k -> new Object());
+
+            synchronized (lock1) {
+                synchronized (lock2) {
+                    if (accountFrom.getBalance().compareTo(amount) < 0) {
+                        throw new InsufficientFundsException("Insufficient funds in account: " + accountFromId);
+                    }
+
+                    // Perform transfer
+                    accountFrom.setBalance(accountFrom.getBalance().subtract(amount));
+                    accountTo.setBalance(accountTo.getBalance().add(amount));
+
+                    // Log transfer details
+                    log.info("Transfer completed - Amount: {} transferred from Account {} to Account {}", amount, accountFromId, accountToId);
+                }
             }
-
-            // Perform transfer
-            accountFrom.setBalance(accountFrom.getBalance().subtract(amount));
-            accountTo.setBalance(accountTo.getBalance().add(amount));
-
-            log.info("Transfer completed - Amount: {} transferred from Account {} to Account {}", amount, accountFromId, accountToId);
-        }
     }
 }
