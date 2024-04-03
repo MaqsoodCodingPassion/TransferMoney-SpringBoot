@@ -42,33 +42,52 @@ public class TransferServiceImpl implements TransferService {
     @Override
     @Transactional
     public void transfer(String accountFromId, String accountToId, BigDecimal amount) throws InsufficientFundsException {
-            Account accountFrom = accountsRepository.getAccount(accountFromId);
-            Account accountTo = accountsRepository.getAccount(accountToId);
+        // Load accounts from the repository
+        Account accountFrom = loadAccount(accountFromId);
+        Account accountTo = loadAccount(accountToId);
 
-            if (accountFrom == null || accountTo == null) {
-                throw new IllegalArgumentException("Invalid account details provided");
-            }
+        // Perform the transfer
+        performTransfer(accountFrom, accountTo, amount);
+    }
 
-            // Ensure consistent lock acquisition order to prevent deadlocks
-            String lockKey1 = accountFromId.compareTo(accountToId) < 0 ? accountFromId : accountToId;
-            String lockKey2 = accountFromId.compareTo(accountToId) < 0 ? accountToId : accountFromId;
+    private Account loadAccount(String accountId) {
+        Account account = accountsRepository.getAccount(accountId);
+        if (account == null) {
+            throw new IllegalArgumentException("Invalid account details provided");
+        }
+        return account;
+    }
 
-            Object lock1 = accountLocks.computeIfAbsent(lockKey1, k -> new Object());
-            Object lock2 = accountLocks.computeIfAbsent(lockKey2, k -> new Object());
+    /**
+     * Transfers a specified amount from one account to another.
+     *
+     * @param accountFrom The ID of the account from which the amount will be transferred.
+     * @param accountTo The ID of the account to which the amount will be transferred.
+     * @param amount The amount to transfer.
+     * @throws InsufficientFundsException if the account from which the transfer is initiated does not have sufficient funds.
+     * @throws IllegalArgumentException if the provided account IDs are invalid or if the accounts cannot be found.
+     */
+    private void performTransfer(Account accountFrom, Account accountTo, BigDecimal amount) throws InsufficientFundsException {
+        // Ensure consistent lock acquisition order to prevent deadlocks
+        String lockKey1 = accountFrom.getAccountId().compareTo(accountTo.getAccountId()) < 0 ? accountFrom.getAccountId() : accountTo.getAccountId();
+        String lockKey2 = accountFrom.getAccountId().compareTo(accountTo.getAccountId()) < 0 ? accountTo.getAccountId() : accountFrom.getAccountId();
 
-            synchronized (lock1) {
-                synchronized (lock2) {
-                    if (accountFrom.getBalance().compareTo(amount) < 0) {
-                        throw new InsufficientFundsException("Insufficient funds in account: " + accountFromId);
-                    }
+        Object lock1 = accountLocks.computeIfAbsent(lockKey1, k -> new Object());
+        Object lock2 = accountLocks.computeIfAbsent(lockKey2, k -> new Object());
 
-                    // Perform transfer
-                    accountFrom.setBalance(accountFrom.getBalance().subtract(amount));
-                    accountTo.setBalance(accountTo.getBalance().add(amount));
-
-                    // Log transfer details
-                    log.info("Transfer completed - Amount: {} transferred from Account {} to Account {}", amount, accountFromId, accountToId);
+        synchronized (lock1) {
+            synchronized (lock2) {
+                if (accountFrom.getBalance().compareTo(amount) < 0) {
+                    throw new InsufficientFundsException("Insufficient funds in account: " + accountFrom.getAccountId());
                 }
+
+                // Perform transfer
+                accountFrom.setBalance(accountFrom.getBalance().subtract(amount));
+                accountTo.setBalance(accountTo.getBalance().add(amount));
+
+                // Log transfer details
+                log.info("Transfer completed - Amount: {} transferred from Account {} to Account {}", amount, accountFrom.getAccountId(), accountTo.getAccountId());
             }
+        }
     }
 }
