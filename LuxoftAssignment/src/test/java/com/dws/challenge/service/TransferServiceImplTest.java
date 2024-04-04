@@ -96,6 +96,6 @@ public class TransferServiceImplTest {
         });
 
         // Verify that the expected exception is thrown
-        assertEquals("Invalid account details provided", exception.getMessage());
+        assertEquals("The amount to transfer must be a positive number", exception.getMessage());
     }
 }

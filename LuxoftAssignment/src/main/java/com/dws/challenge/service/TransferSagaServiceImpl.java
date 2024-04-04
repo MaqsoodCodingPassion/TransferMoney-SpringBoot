@@ -8,8 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * TransferSagaServiceImpl class responsible for managing the transfer saga.
@@ -22,7 +20,6 @@ public class TransferSagaServiceImpl implements TransferSagaService {
     private final TransferService transferService;
     private final NotificationService notificationService;
     private final AccountsRepository accountsRepository;
-    private final Map<String, Object> accountLocks = new ConcurrentHashMap<>();
 
     /**
      * Constructs a new TransferSagaServiceImpl with the specified dependencies.
@@ -47,33 +44,17 @@ public class TransferSagaServiceImpl implements TransferSagaService {
      * @throws TransferSagaException if the transfer saga fails unexpectedly.
      */
     @Override
-    public synchronized void initiateTransferSaga(String accountFromId, String accountToId, BigDecimal amount) throws InsufficientFundsException {
+    public void initiateTransferSaga(String accountFromId, String accountToId, BigDecimal amount) throws InsufficientFundsException {
             // Retrieve accounts
             Account accountFrom = accountsRepository.getAccount(accountFromId);
             Account accountTo = accountsRepository.getAccount(accountToId);
 
-            if (accountFrom == null || accountTo == null) {
-                throw new IllegalArgumentException("Invalid account details provided");
-            }
+            // Perform transfer
+            transferService.transfer(accountFromId, accountToId, amount);
+            // Send notifications
+            notificationService.notifyAboutTransfer(accountFrom, "Transfer to " + accountToId, amount);
+            notificationService.notifyAboutTransfer(accountTo, "Transfer from " + accountFromId, amount);
 
-            // Ensure consistent lock acquisition order to prevent deadlocks
-            String lockKey1 = accountFromId.compareTo(accountToId) < 0 ? accountFromId : accountToId;
-            String lockKey2 = accountFromId.compareTo(accountToId) < 0 ? accountToId : accountFromId;
-
-            Object lock1 = accountLocks.computeIfAbsent(lockKey1, k -> new Object());
-            Object lock2 = accountLocks.computeIfAbsent(lockKey2, k -> new Object());
-
-            synchronized (lock1) {
-                synchronized (lock2) {
-                    // Perform transfer
-                    transferService.transfer(accountFromId, accountToId, amount);
-
-                    // Notify account holders
-                    String transferDescription = "Amount transferred to Account " + accountToId + ": " + amount;
-                    notificationService.notifyAboutTransfer(accountFrom, transferDescription, amount);
-                    notificationService.notifyAboutTransfer(accountTo, transferDescription, amount);
-                    log.info("Transfer saga completed - Amount: {} transferred from Account {} to Account {}", amount, accountFromId, accountToId);
-                }
-          }
-    }
+            log.info("Transfer saga completed - Amount: {} transferred from Account {} to Account {}", amount, accountFromId, accountToId);
+        }
 }

@@ -42,6 +42,12 @@ public class TransferServiceImpl implements TransferService {
     @Override
     @Transactional
     public void transfer(String accountFromId, String accountToId, BigDecimal amount) throws InsufficientFundsException {
+
+        // Check if the amount is positive
+        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("The amount to transfer must be a positive number");
+        }
+
         // Load accounts from the repository
         Account accountFrom = loadAccount(accountFromId);
         Account accountTo = loadAccount(accountToId);
