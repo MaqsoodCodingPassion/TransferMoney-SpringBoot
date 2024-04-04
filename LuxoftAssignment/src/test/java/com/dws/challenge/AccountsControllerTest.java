@@ -62,36 +62,12 @@ class AccountsControllerTest {
       .content("{\"accountId\":\"Id-123\",\"balance\":1000}")).andExpect(status().isBadRequest());
   }
 
-/*  @Test
-  void createAccountNoAccountId() throws Exception {
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"balance\":1000}")).andExpect(status().isBadRequest());
-  }*/
-
- /* @Test
-  void createAccountNoBalance() throws Exception {
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\"}")).andExpect(status().isBadRequest());
-  }*/
-
   @Test
   void createAccountNoBody() throws Exception {
     this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isBadRequest());
   }
 
- /* @Test
-  void createAccountNegativeBalance() throws Exception {
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"Id-123\",\"balance\":-1000}")).andExpect(status().isBadRequest());
-  }*/
-
- /* @Test
-  void createAccountEmptyAccountId() throws Exception {
-    this.mockMvc.perform(post("/v1/accounts").contentType(MediaType.APPLICATION_JSON)
-      .content("{\"accountId\":\"\",\"balance\":1000}")).andExpect(status().isBadRequest());
-  }
-*/
   @Test
   void getAccount() throws Exception {
     String uniqueAccountId = "Id-" + System.currentTimeMillis();
